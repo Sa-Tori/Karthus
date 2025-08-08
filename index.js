@@ -7,6 +7,7 @@ const client = new Client({
 });
 
 client.once('ready', () => {
+    console.log("DISCORD_TOKEN:", process.env.DISCORD_TOKEN);
     console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
