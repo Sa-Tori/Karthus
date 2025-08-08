@@ -1,7 +1,6 @@
 ﻿require('dotenv').config();
-require('./server'); // запускаем фейковый сервер
-
 const { Client, GatewayIntentBits } = require('discord.js');
+require('./server'); // Express
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
