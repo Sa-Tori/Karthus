@@ -7,7 +7,7 @@ const client = new Client({
 });
 
 const axios = require('axios');
-const SELF_URL = 'https://твой-сабдомен.onrender.com';
+const SELF_URL = 'https://karthus.onrender.com';
 
 setInterval(() => {
     axios.get(SELF_URL)
