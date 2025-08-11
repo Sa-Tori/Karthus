@@ -1,12 +1,11 @@
-﻿require('dotenv').config();
+﻿// ─── Загрузка переменных ─────────────────────────────────────────────
+require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
+const axios = require('axios');
+
+// ─── Фейковый сервер для Render ──────────────────────────────────────
 require('./server'); // Express
 
-const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
-});
-
-const axios = require('axios');
 const SELF_URL = 'https://karthus.onrender.com';
 
 setInterval(() => {
@@ -15,13 +14,13 @@ setInterval(() => {
         .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
 }, 14 * 60 * 1000); // каждые 14 минут
 
+// ─── Общие функции ───────────────────────────────────────────────────
 async function sendMessageToChannel(client, channelId, messageText) {
     try {
         const channel = await client.channels.fetch(channelId);
-
         if (channel && channel.isTextBased()) {
             await channel.send(messageText);
-            console.log(`[Discord] Сообщение отправлено в канал ${channelId}`);
+            //console.log(`[Discord] Сообщение отправлено в канал ${channelId}`);
         } else {
             console.error(`[Discord] Канал ${channelId} не является текстовым`);
         }
@@ -34,31 +33,136 @@ async function reportErrorToDiscord(client, error) {
     try {
         const guild = await client.guilds.fetch('466006517288665099');
         const channel = await guild.channels.fetch('522817871370387472');
-
         if (channel && channel.isTextBased()) {
-            await channel.send(` Ошибка: \`\`\`${error.message || error}\`\`\``);
+            await channel.send(`Ошибка от ${client.user?.tag || 'неизвестного'}: \`\`\`${error.message || error}\`\`\``);
         }
     } catch (err) {
         console.error('Не удалось отправить ошибку в Discord:', err);
     }
 }
 
-client.once('ready', () => {
-    //console.log("DISCORD_TOKEN:", process.env.DISCORD_TOKEN);
-    console.log(` Logged in as ${client.user.tag}`);
-    sendMessageToChannel(client, '522817871370387472', 'Приложение запущено - 1');
+// ─── Подключение Karthus ─────────────────────────────────────────────
+const karthus = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
+karthus.setMaxListeners(30); // увеличиваем лимит слушателей
+
+const karthusHandlers = [
+    require('./Karthus/answer'),
+    require('./Karthus/antinitro'),
+    require('./Karthus/coffee'),
+    require('./Karthus/commands'),
+    require('./Karthus/control'),
+    require('./Karthus/embeds'),
+    require('./Karthus/greeting'),
+    require('./Karthus/reaction'),
+    require('./Karthus/replicas'),
+    require('./Karthus/theult')
+];
+
+karthus.once('ready', () => {
+    console.log(`Karthus logged in as ${karthus.user.tag}`);
+    sendMessageToChannel(karthus, '522817871370387472', 'Приложение запущено - 1');
 });
 
-client.on('messageCreate', async (message) => {
+karthus.on('messageCreate', async (message) => {
     if (message.content === '!ping') {
         try {
-            await message.reply('Pong!');
+            await message.reply('Karthus Pong!');
         } catch (error) {
-            console.error('Ошибка при обработке !ping:', error);
-            reportErrorToDiscord(client, error);
+            console.error('Ошибка в Karthus:', error);
+            reportErrorToDiscord(karthus, error);
+        }
+        return;
+    }
+
+    for (const handler of karthusHandlers) {
+        try {
+            await handler(message, karthus);
+        } catch (err) {
+            console.error('Ошибка в обработчике Karthus:', err);
         }
     }
 });
 
+karthus.login(process.env.DISCORD_TOKEN);
 
-client.login(process.env.DISCORD_TOKEN);
+// ─── Подключение Merlai ──────────────────────────────────────────────
+const merlai = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
+merlai.setMaxListeners(10);
+
+const handleMerlaiAnswer = require('./Merlai/answer');
+
+merlai.once('ready', () => {
+    console.log(`Merlai logged in as ${merlai.user.tag}`);
+    sendMessageToChannel(merlai, '522817871370387472', 'Приложение запущено - 2');
+});
+
+merlai.on('messageCreate', async (message) => {
+    if (message.content === '!ping') {
+        try {
+            await message.reply('Merlai Pong!');
+        } catch (error) {
+            console.error('Ошибка в Merlai:', error);
+            reportErrorToDiscord(merlai, error);
+        }
+        return;
+    }
+
+    try {
+        await handleMerlaiAnswer(message, merlai);
+    } catch (err) {
+        console.error('Ошибка в обработчике Merlai:', err);
+        reportErrorToDiscord(merlai, err);
+    }
+});
+
+merlai.login(process.env.DISCORD_TOKEN1);
+
+// ─── Подключение Shadian ─────────────────────────────────────────────
+const shadian = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
+
+shadian.once('ready', () => {
+    console.log(`Shadian logged in as ${shadian.user.tag}`);
+    sendMessageToChannel(shadian, '522817871370387472', 'Приложение запущено - 3');
+});
+
+shadian.on('messageCreate', async (message) => {
+    if (message.content === '!ping') {
+        try {
+            await message.reply('Shadian Pong!');
+        } catch (error) {
+            console.error('Ошибка в Shadian:', error);
+            reportErrorToDiscord(shadian, error);
+        }
+    }
+});
+
+shadian.login(process.env.DISCORD_TOKEN2);
+
+// ─── Подключение Nazgul ──────────────────────────────────────────────
+const nazgul = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
+
+nazgul.once('ready', () => {
+    console.log(`Nazgul logged in as ${nazgul.user.tag}`);
+    sendMessageToChannel(nazgul, '522817871370387472', 'Приложение запущено - 4');
+});
+
+nazgul.on('messageCreate', async (message) => {
+    if (message.content === '!ping') {
+        try {
+            await message.reply('Nazgul Pong!');
+        } catch (error) {
+            console.error('Ошибка в Nazgul:', error);
+            reportErrorToDiscord(nazgul, error);
+        }
+    }
+});
+
+nazgul.login(process.env.DISCORD_TOKEN3);
