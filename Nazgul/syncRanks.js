@@ -1,13 +1,6 @@
-const axios = require('axios');
+const puppeteer = require('puppeteer');
 
 const rankRoles = {
-    //2: '1406293586148065461',
-    //3: '1406293679349436605',
-    //4: '1406293653390889020',
-    //5: '1406296405932380201',
-    //6: '1406296436240420914',
-    //7: '1406293703714144289',
-    //8: '1406296459732582601'
     2: '1406293586148065461', // Зам. ГМ
     3: '1406293679349436605', // Старший офицер
     4: '1406293653390889020', // Офицер
@@ -27,13 +20,35 @@ module.exports = async function (message, client) {
         const guild = await client.guilds.fetch(message.guildId);
         const members = await guild.members.list({ limit: 1000 });
 
-        const response = await axios.get('https://sirus.su/api/base/57/guild/8685', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        const browser = await puppeteer.launch({
+            executablePath: './chromium/chrome-linux/chrome',
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--disable-features=SitePerProcess',
+                '--single-process',
+                '--no-zygote'
+            ]
+        });
+
+        const page = await browser.newPage();
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+        await page.goto('https://sirus.su/guild/8685', { waitUntil: 'networkidle2' });
+
+        const data = await page.evaluate(async () => {
+            try {
+                const res = await fetch('https://sirus.su/api/base/57/guild/8685');
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) {
+                return null;
             }
         });
 
-        const data = response.data;
+        await browser.close();
 
         if (!data || !Array.isArray(data.members)) {
             return message.channel.send('Не удалось получить список гильдии.');

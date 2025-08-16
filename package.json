@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "apt-get update && apt-get install -y wget unzip && wget https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1181205/chrome-linux.zip && unzip chrome-linux.zip && mv chrome-linux chromium",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
