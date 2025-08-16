@@ -21,17 +21,8 @@ module.exports = async function (message, client) {
         const members = await guild.members.list({ limit: 1000 });
 
         const browser = await puppeteer.launch({
-            executablePath: './chromium/chrome-linux/chrome',
             headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--disable-features=SitePerProcess',
-                '--single-process',
-                '--no-zygote'
-            ]
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
         const page = await browser.newPage();
