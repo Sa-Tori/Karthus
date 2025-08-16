@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const { chromium } = require('playwright'); // заменили puppeteer на playwright
 
 const rankRoles = {
     //2: '1355442048743899197', // Зам. ГМ
@@ -29,16 +29,14 @@ module.exports = async function (message, client) {
         // Загружаем участников по частям, чтобы избежать GuildMembersTimeout
         const members = await guild.members.list({ limit: 1000 });
 
-        const browser = await puppeteer.launch({
-            executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.68/chrome-linux64/chrome',
-            headless: 'new',
+        const browser = await chromium.launch({
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
         const page = await browser.newPage();
-
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-        await page.goto('https://sirus.su/guild/8685', { waitUntil: 'networkidle2' });
+        await page.goto('https://sirus.su/guild/8685', { waitUntil: 'networkidle' });
 
         const data = await page.evaluate(async () => {
             try {
