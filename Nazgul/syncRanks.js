@@ -29,7 +29,12 @@ module.exports = async function (message, client) {
         // Загружаем участников по частям, чтобы избежать GuildMembersTimeout
         const members = await guild.members.list({ limit: 1000 });
 
-        const browser = await puppeteer.launch({ headless: 'new' });
+        const browser = await puppeteer.launch({
+            executablePath: '/opt/render/.cache/puppeteer/chrome/linux-139.0.7258.68/chrome-linux64/chrome',
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
         const page = await browser.newPage();
 
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
