@@ -149,6 +149,12 @@ const nazgul = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
+const nazgulHandlers = [
+    require('./Nazgul/sirus'),
+    require('./Nazgul/syncRanks'),
+    // другие обработчики...
+];
+
 nazgul.once('ready', () => {
     console.log(`Nazgul logged in as ${nazgul.user.tag}`);
     sendMessageToChannel(nazgul, '522817871370387472', 'Приложение запущено - 4');
@@ -161,6 +167,15 @@ nazgul.on('messageCreate', async (message) => {
         } catch (error) {
             console.error('Ошибка в Nazgul:', error);
             reportErrorToDiscord(nazgul, error);
+        }
+        return;
+    }
+
+    for (const handler of nazgulHandlers) {
+        try {
+            await handler(message, nazgul);
+        } catch (err) {
+            console.error('Ошибка в обработчике Nazgul:', err);
         }
     }
 });
