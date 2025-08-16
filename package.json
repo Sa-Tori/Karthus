@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "curl -O https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1181205/chrome-linux.zip && unzip chrome-linux.zip && mv chrome-linux chromium",
+    "postinstall": "curl -O https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1181205/chrome-linux.zip && npx decompress chrome-linux.zip .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.11.0",
+    "decompress": "^4.2.1",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
