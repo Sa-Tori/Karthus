@@ -1,13 +1,13 @@
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 const rankRoles = {
-    //2: '1406293586148065461', // Зам. ГМ
-    //3: '1406293679349436605', // Старший офицер
-    //4: '1406293653390889020', // Офицер
-    //5: '1406296405932380201', // Статик
-    //6: '1406296436240420914', // Легенды
-    //7: '1406293703714144289', // Рядовой
-    //8: '1406296459732582601'  // Новичок 
+    //2: '1406293586148065461',
+    //3: '1406293679349436605',
+    //4: '1406293653390889020',
+    //5: '1406296405932380201',
+    //6: '1406296436240420914',
+    //7: '1406293703714144289',
+    //8: '1406296459732582601'
     2: '1406293586148065461', // Зам. ГМ
     3: '1406293679349436605', // Старший офицер
     4: '1406293653390889020', // Офицер
@@ -27,10 +27,13 @@ module.exports = async function (message, client) {
         const guild = await client.guilds.fetch(message.guildId);
         const members = await guild.members.list({ limit: 1000 });
 
-        const res = await fetch('https://sirus.su/api/base/57/guild/8685');
-        if (!res.ok) throw new Error('API недоступен');
+        const response = await axios.get('https://sirus.su/api/base/57/guild/8685', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            }
+        });
 
-        const data = await res.json();
+        const data = response.data;
 
         if (!data || !Array.isArray(data.members)) {
             return message.channel.send('Не удалось получить список гильдии.');
