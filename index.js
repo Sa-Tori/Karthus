@@ -150,8 +150,8 @@ const nazgul = new Client({
 });
 
 const nazgulHandlers = [
-    require('./Nazgul/sirus'),
-    require('./Nazgul/syncRanks'),
+    //require('./Nazgul/sirus'),
+    //require('./Nazgul/syncRanks'),
     // другие обработчики...
 ];
 
