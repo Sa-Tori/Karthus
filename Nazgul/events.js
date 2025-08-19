@@ -72,9 +72,7 @@ module.exports = function setupEvents(client) {
     });
 
     // выход с сервера 
-
     client.on('guildMemberRemove', async (member) => {
-        console.log(`[DEBUG] Участник вышел: ${member.user.tag} (${member.id})`);
         if (member.guild.id !== '1195522221901369455') return;
         const guild = member.guild;
         const logChannel = guild.channels.cache.get('1273059498864676885');
@@ -123,8 +121,161 @@ module.exports = function setupEvents(client) {
             })
             .addFields(
                 { name: 'Участник', value: `<@${member.id}>`, inline: true },
-                { name: 'Действие', value: action, inline: true },
-                { name: 'Дата входа', value: member.joinedAt ? `<t:${Math.floor(member.joinedAt.getTime() / 1000)}:F>` : 'неизвестно', inline: true }
+                { name: 'Действие', value: action, inline: true }
+            )
+            .setTimestamp();
+
+        logChannel.send({ embeds: [embed] });
+    });
+
+    //снятие-выдача роли
+    client.on('guildMemberUpdate', async (oldMember, newMember) => {
+        if (newMember.guild.id !== '1195522221901369455') return;
+
+        const logChannel = newMember.guild.channels.cache.get('1407373230892908586');
+        if (!logChannel || !logChannel.isTextBased()) return;
+
+        const oldRoles = new Set(oldMember.roles.cache.keys());
+        const newRoles = new Set(newMember.roles.cache.keys());
+
+        const addedRoles = [...newRoles].filter(roleId => !oldRoles.has(roleId));
+        const removedRoles = [...oldRoles].filter(roleId => !newRoles.has(roleId));
+
+        if (addedRoles.length === 0 && removedRoles.length === 0) return;
+
+        const auditLogs = await newMember.guild.fetchAuditLogs({
+            limit: 10,
+            type: AuditLogEvent.MemberRoleUpdate
+        });
+
+        const relevantLog = auditLogs.entries.find(entry =>
+            entry.target.id === newMember.id &&
+            Date.now() - entry.createdTimestamp < 5000
+        );
+
+        const executor = relevantLog?.executor;
+        const executorMention = executor ? `<@${executor.id}>` : 'Неизвестно';
+
+        for (const roleId of addedRoles) {
+            const role = newMember.guild.roles.cache.get(roleId);
+            const embed = new EmbedBuilder()
+                .setColor(0x00cc66)
+                .setTitle('✅ Роль выдана')
+                .addFields(
+                    { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                    { name: 'Роль', value: `<@&${roleId}>`, inline: true },
+                    { name: 'Выдал', value: executorMention, inline: true }
+                )
+                .setTimestamp()
+                .setFooter({ text: `Role_ID: ${roleId}` });
+
+            logChannel.send({ embeds: [embed] });
+        }
+
+        for (const roleId of removedRoles) {
+            const role = newMember.guild.roles.cache.get(roleId);
+            const embed = new EmbedBuilder()
+                .setColor(0xcc3300)
+                .setTitle('❌ Роль снята')
+                .addFields(
+                    { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                    { name: 'Роль', value: `<@&${roleId}>`, inline: true },
+                    { name: 'Снял', value: executorMention, inline: true }
+                )
+                .setTimestamp()
+                .setFooter({ text: `Role_ID: ${roleId}` });
+
+            logChannel.send({ embeds: [embed] });
+        }
+    });
+
+    //смена никнейма
+    client.on('guildMemberUpdate', async (oldMember, newMember) => {
+        if (newMember.guild.id !== '1195522221901369455') return;
+
+        const oldNick = oldMember.nickname;
+        const newNick = newMember.nickname;
+
+        if (oldNick === newNick) return;
+
+        const logChannel = newMember.guild.channels.cache.get('1407373230892908586');
+        if (!logChannel || !logChannel.isTextBased()) return;
+
+        let executorMention = 'Неизвестно';
+
+        try {
+            const logs = await newMember.guild.fetchAuditLogs({
+                limit: 5,
+                type: AuditLogEvent.MemberUpdate
+            });
+
+            const nicknameLog = logs.entries.find(entry =>
+                entry.target.id === newMember.id &&
+                entry.changes?.some(change => change.key === 'nick') &&
+                Date.now() - entry.createdTimestamp < 5000
+            );
+
+            if (nicknameLog?.executor) {
+                executorMention = `<@${nicknameLog.executor.id}>`;
+            }
+        } catch (err) {
+            console.error('[NicknameLog] Ошибка при получении аудит-логов:', err);
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor(0x3399ff)
+            .setTitle('✏️ Изменение никнейма')
+            .setAuthor({
+                name: newMember.user.tag,
+                iconURL: newMember.user.displayAvatarURL({ dynamic: true })
+            })
+            .addFields(
+                { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                { name: 'Изменил', value: executorMention, inline: true },
+                { name: 'Было', value: oldNick || '*(не было)*', inline: false },
+                { name: 'Стало', value: newNick || '*(сброшено)*', inline: false }
+            )
+            .setTimestamp();
+
+        logChannel.send({ embeds: [embed] });
+    });
+        
+    client.on('guildBanRemove', async (ban) => {
+        if (ban.guild.id !== '1195522221901369455') return;
+
+        const logChannel = ban.guild.channels.cache.get('1273059498864676885');
+        if (!logChannel || !logChannel.isTextBased()) return;
+
+        let executorMention = 'Неизвестно';
+
+        try {
+            const logs = await ban.guild.fetchAuditLogs({
+                limit: 5,
+                type: AuditLogEvent.MemberBanRemove
+            });
+
+            const unbanLog = logs.entries.find(entry =>
+                entry.target.id === ban.user.id &&
+                Date.now() - entry.createdTimestamp < 5000
+            );
+
+            if (unbanLog?.executor) {
+                executorMention = `<@${unbanLog.executor.id}>`;
+            }
+        } catch (err) {
+            console.error('[UnbanLog] Ошибка при получении аудит-логов:', err);
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle('🔓 Участник разбанен')
+            .setColor(0x33cc99)
+            .setAuthor({
+                name: ban.user.tag,
+                iconURL: ban.user.displayAvatarURL({ dynamic: true })
+            })
+            .addFields(
+                { name: 'Пользователь', value: `<@${ban.user.id}>`, inline: true },
+                { name: 'Разбанил', value: executorMention, inline: true }
             )
             .setTimestamp();
 
