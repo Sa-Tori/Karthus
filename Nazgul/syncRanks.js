@@ -1,13 +1,20 @@
 const puppeteer = require('puppeteer');
 
 const rankRoles = {
-    2: '1406293586148065461', // Зам. ГМ
-    3: '1406293679349436605', // Старший офицер
-    4: '1406293653390889020', // Офицер
-    5: '1406296405932380201', // Статик 
-    6: '1406296436240420914', // Легенды 
-    7: '1406293703714144289', // Рядовой
-    8: '1406296459732582601'  // Новичок 
+    //2: '1406293586148065461', // Зам. ГМ
+    //3: '1406293679349436605', // Старший офицер
+    //4: '1406293653390889020', // Офицер
+    //5: '1406296405932380201', // Статик
+    //6: '1406296436240420914', // Легенды
+    //7: '1406293703714144289', // Рядовой
+    //8: '1406296459732582601'  // Новичок 
+    2: '1355442048743899197', // Зам. ГМ
+    3: '1201879091507384380', // Старший офицер
+    4: '1252297467899154443', // Офицер
+    5: '1273703852515921930', // Статик 
+    6: '1406290532807868550', // Легенды 
+    7: '1249200708054679553', // Рядовой
+    8: '1273061745753194557'  // Новичок 
 };
 
 const IGNORED_USER_ID = '1051920919171436624';
@@ -65,7 +72,9 @@ module.exports = async function (message, client) {
                 for (const roleId of roleIdsToCheck) {
                     if (roleId !== rankRoles[8] && currentRoles.has(roleId)) {
                         await member.roles.remove(roleId);
-                        console.log(`❌ ${member.displayName} — не найден, снята роль ${roleId}`);
+                        const roleName = guild.roles.cache.get(roleId)?.name || `Unknown(${roleId})`;
+                        console.log(`❌ ${member.displayName} — не найден, снята роль ${roleName}`);
+                        message.channel.send(`❌ ${member.displayName} — не найден, снята роль ${roleName}`);
                         updated++;
                     }
                 }
@@ -79,23 +88,31 @@ module.exports = async function (message, client) {
             const correctRoleId = rankRoles[rankId];
             if (!correctRoleId) continue;
 
-            const needsUpdate = !currentRoles.has(correctRoleId);
+            const hasCorrectRole = currentRoles.has(correctRoleId);
+            const extraRoles = roleIdsToCheck.filter(id => id !== correctRoleId && currentRoles.has(id));
 
-            if (needsUpdate) {
-                for (const roleId of roleIdsToCheck) {
-                    if (roleId !== correctRoleId && currentRoles.has(roleId)) {
-                        await member.roles.remove(roleId);
-                    }
+            if (!hasCorrectRole) {
+                for (const roleId of extraRoles) {
+                    await member.roles.remove(roleId);
                 }
                 await member.roles.add(correctRoleId);
                 console.log(`✅ ${member.displayName} → ${rankMap[rankId]}`);
+                message.channel.send(`✅ ${member.displayName} → ${rankMap[rankId]}`);
                 updated++;
+            } else if (extraRoles.length > 0) {
+                for (const roleId of extraRoles) {
+                    await member.roles.remove(roleId);
+                    const roleName = guild.roles.cache.get(roleId)?.name || `Unknown(${roleId})`
+                    console.log(`🧹 ${member.displayName} — удалена лишняя роль ${roleName}`);
+                    message.channel.send(`🧹 ${member.displayName} — удалена лишняя роль ${roleName}`);
+                    updated++;
+                }
             }
         }
 
         return message.channel.send(`✅ Синхронизация завершена. Обновлено: ${updated}, пропущено: ${skipped}`);
     } catch (err) {
-        message.channel.send('<@542663623789641729> ошибка при синхронизации ролей.');
+        message.channel.send('<@478669590365339649> ошибка при синхронизации ролей.');
         console.error('[SyncRanks] Ошибка:', err);
     }
 };

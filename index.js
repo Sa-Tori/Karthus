@@ -146,14 +146,22 @@ shadian.login(process.env.DISCORD_TOKEN2);
 
 // ─── Подключение Nazgul ──────────────────────────────────────────────
 const nazgul = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers // ← вот это обязательно
+    ]
 });
 
 const nazgulHandlers = [
-    //require('./Nazgul/sirus'),
+    require('./Nazgul/sirus'),
     //require('./Nazgul/syncRanks'),
     // другие обработчики...
 ];
+
+const setupEvents = require('./Nazgul/events');
+setupEvents(nazgul);
 
 nazgul.once('ready', () => {
     console.log(`Nazgul logged in as ${nazgul.user.tag}`);
