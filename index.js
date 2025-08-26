@@ -153,7 +153,7 @@ const nazgul = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers 
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
+    partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User]
 });
 
 const nazgulHandlers = [
