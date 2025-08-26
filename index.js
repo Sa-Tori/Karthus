@@ -1,6 +1,6 @@
 ﻿// ─── Загрузка переменных ─────────────────────────────────────────────
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const axios = require('axios');
 
 // ─── Фейковый сервер для Render ──────────────────────────────────────
@@ -57,7 +57,8 @@ const karthusHandlers = [
     require('./Karthus/greeting'),
     require('./Karthus/reaction'),
     require('./Karthus/replicas'),
-    require('./Karthus/theult')
+    require('./Karthus/theult'),
+    require('./Karthus/ai')
 ];
 
 karthus.once('ready', () => {
@@ -150,8 +151,9 @@ const nazgul = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers // ← вот это обязательно
-    ]
+        GatewayIntentBits.GuildMembers 
+    ],
+    partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
 });
 
 const nazgulHandlers = [

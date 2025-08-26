@@ -4,43 +4,136 @@ module.exports = function setupEvents(client) {
     //удаление сообщения
     client.on('messageDelete', async (message) => {
         if (!message.guild || message.guild.id !== '1195522221901369455') return;
+        if (!message.author || message.author.id === '1404193755141247046') return;
 
-        const logChannel = message.guild.channels.cache.get('1407055227240190093');
-        if (!logChannel || !logChannel.isTextBased()) return;
+        try {
+            const logChannel = message.guild.channels.cache.get('1407055227240190093');
+            if (!logChannel || !logChannel.isTextBased()) return;
 
-        const fetchedLogs = await message.guild.fetchAuditLogs({
-            limit: 1,
-            type: AuditLogEvent.MessageDelete
-        });
+            const fetchedLogs = await message.guild.fetchAuditLogs({
+                limit: 1,
+                type: AuditLogEvent.MessageDelete
+            });
 
-        const deletionLog = fetchedLogs.entries.first();
-        let executor = 'Неизвестно';
+            const deletionLog = fetchedLogs.entries.first();
+            let executor = 'Неизвестно';
+            let executorId = null;
 
-        if (deletionLog && deletionLog.target?.id === message.author?.id) {
-            executor = deletionLog.executor?.tag || 'Неизвестно';
+            if (deletionLog && deletionLog.target?.id === message.author?.id) {
+                executor = deletionLog.executor?.tag || 'Неизвестно';
+                executorId = deletionLog.executor?.id;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor(0xff5555)
+                .setAuthor({
+                    name: message.author?.tag || 'Неизвестно',
+                    iconURL: message.author?.displayAvatarURL({ dynamic: true })
+                })
+                .addFields(
+                    { name: 'Автор', value: `<@${message.author?.id || 'неизвестно'}>`, inline: true },
+                    { name: 'Удалил', value: executorId ? `<@${executorId}>` : 'Неизвестно', inline: true },
+                    { name: 'Канал', value: `<#${message.channel.id}>`, inline: true },
+                    { name: 'Содержимое', value: message.content?.slice(0, 1024) || '*(пусто)*' }
+                )
+                .setFooter({ text: `Msg_ID: ${message.id || 'неизвестно'}` })
+                .setTimestamp();
+
+            if (message.attachments.size > 0) {
+                const attachmentUrls = message.attachments.map(att => att.url).join('\n');
+                embed.addFields({ name: '📎 Вложения', value: attachmentUrls });
+            }
+
+            await logChannel.send({ embeds: [embed] });
+
+            // Пересылка на другой сервер
+            const otherGuild = await client.guilds.fetch('466006517288665099');
+            const logChannel2 = await otherGuild.channels.fetch('878081921601642506');
+            if (logChannel2 && logChannel2.isTextBased()) {
+                await logChannel2.send({ embeds: [embed] });
+            }
+        } catch (err) {
+            const control = client.channels.cache.get('878520465856036935');
+            control?.send('Мама, хлеп! Ошибка в логировании удаления сообщения.');
+            console.error('[Nazgul] Ошибка в обработке messageDelete:', err);
         }
-        const executorId = deletionLog?.executor?.id;
-        const embed = new EmbedBuilder()
-            .setColor(0xff5555)
-            .setAuthor({
-                name: message.author?.tag || 'Неизвестно',
-                iconURL: message.author?.displayAvatarURL({ dynamic: true })
-            })
-            .addFields(
-                { name: 'Автор', value: `<@${message.author?.id || 'неизвестно'}>`, inline: true },
-                { name: 'Удалил', value: executorId ? `<@${executorId}>` : 'Неизвестно', inline: true },
-                { name: 'Канал', value: `<#${message.channel.id}>`, inline: true },
-                { name: 'Содержимое', value: message.content?.slice(0, 1024) || '*(пусто)*' }
-        )
-            .setFooter({ text: `Msg_ID: ${message.id || 'неизвестно'}` })
-            .setTimestamp();
+    });
 
-        if (message.attachments.size > 0) {
-            const attachmentUrls = message.attachments.map(att => att.url).join('\n');
-            embed.addFields({ name: '📎 Вложения', value: attachmentUrls });
+    //удаление сообщения от назгула
+    client.on('messageDelete', async (message) => {
+        if (!message.guild || message.guild.id !== '1195522221901369455') return;
+        if (!message.author || message.author.id !== '1404193755141247046') return;
+
+        try {
+            const fetchedLogs = await message.guild.fetchAuditLogs({
+                limit: 1,
+                type: AuditLogEvent.MessageDelete
+            });
+
+            const deletionLog = fetchedLogs.entries.first();
+            let executor = 'Неизвестно';
+            const executorId = deletionLog?.executor?.id;
+
+            if (deletionLog && deletionLog.target?.id === message.author?.id) {
+                executor = deletionLog.executor?.tag || 'Неизвестно';
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor(0xff5555)
+                .setAuthor({
+                    name: message.author?.tag || 'Неизвестно',
+                    iconURL: message.author?.displayAvatarURL({ dynamic: true })
+                })
+                .addFields(
+                    { name: 'Автор', value: `<@${message.author?.id || 'неизвестно'}>`, inline: true },
+                    { name: 'Удалил', value: executorId ? `<@${executorId}>` : 'Неизвестно', inline: true },
+                    { name: 'Канал', value: `<#${message.channel.id}>`, inline: true }
+                )
+                .setFooter({ text: `Msg_ID: ${message.id || 'неизвестно'}` })
+                .setTimestamp();
+
+            const contentText = message.content?.slice(0, 1024);
+            if (contentText) {
+                embed.addFields({ name: 'Содержимое', value: contentText });
+            }
+
+            if (message.embeds.length > 0) {
+                const embedData = message.embeds[0];
+                const embedText = [];
+
+                if (embedData.title) embedText.push(`**Заголовок:** ${embedData.title}`);
+                if (embedData.description) embedText.push(`**Описание:** ${embedData.description}`);
+                if (embedData.fields?.length > 0) {
+                    embedData.fields.forEach(field => {
+                        embedText.push(`**${field.name}:** ${field.value}`);
+                    });
+                }
+
+                const combinedEmbedText = embedText.join('\n').slice(0, 1024);
+                embed.addFields({
+                    name: '🧾 Содержимое Embed',
+                    value: combinedEmbedText || '*(embed пуст)*'
+                });
+            }
+
+            if (message.attachments.size > 0) {
+                const attachmentUrls = message.attachments.map(att => att.url).join('\n');
+                embed.addFields({ name: '📎 Вложения', value: attachmentUrls });
+            }
+
+            // Отправка в канал другого сервера
+            const targetGuild = await client.guilds.fetch('466006517288665099');
+            const logChannel2 = await targetGuild.channels.fetch('878081921601642506');
+
+            if (logChannel2 && logChannel2.isTextBased()) {
+                await logChannel2.send('<@478669590365339649> Меня обижают! <a:hlepng:882291167948079165>');
+                await logChannel2.send({ embeds: [embed] });
+            }
+        } catch (err) {
+            const control = client.channels.cache.get('878520465856036935');
+            control?.send('Мама, хлеп! Ошибка при логировании удаления сообщения от Назгула.');
+            console.error('[Nazgul] Ошибка в логировании удаления сообщения:', err);
         }
-
-        logChannel.send({ embeds: [embed] });
     });
 
     //изменение сообщения
@@ -48,7 +141,8 @@ module.exports = function setupEvents(client) {
     if (!newMessage.guild || newMessage.guild.id !== '1195522221901369455') return;
     if (oldMessage.content === newMessage.content) return;
 
-    const logChannel = newMessage.guild.channels.cache.get('1407055227240190093');
+        const logChannel = newMessage.guild.channels.cache.get('1407055227240190093');
+        const logChannel2 = message.guild.channels.cache.get('878081921601642506');
     if (!logChannel || !logChannel.isTextBased()) return;
 
     const messageLink = `https://discord.com/channels/${newMessage.guild.id}/${newMessage.channel.id}/${newMessage.id}`;
@@ -69,6 +163,7 @@ module.exports = function setupEvents(client) {
         .setTimestamp();
 
         logChannel.send({ embeds: [embed] });
+        logChannel2.send({ embeds: [embed] });
     });
 
     // выход с сервера 
