@@ -151,6 +151,7 @@ const nazgul = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMembers 
     ],
     partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User]

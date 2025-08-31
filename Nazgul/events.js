@@ -227,7 +227,7 @@ module.exports = function setupEvents(client) {
     });
 
 
-    //снятие-выдача роли
+    //снятие-выдача роли и смена никнейма
     client.on('guildMemberUpdate', async (oldMember, newMember) => {
         if (newMember.guild.id !== '1195522221901369455') return;
 
@@ -235,134 +235,100 @@ module.exports = function setupEvents(client) {
             const logChannel = newMember.guild.channels.cache.get('1407373230892908586');
             if (!logChannel || !logChannel.isTextBased()) return;
 
+            // 🔹 Смена никнейма
+            const oldNick = oldMember.nickname;
+            const newNick = newMember.nickname;
+
+            if (oldNick !== newNick) {
+                const auditLogs = await newMember.guild.fetchAuditLogs({
+                    limit: 10,
+                    type: AuditLogEvent.MemberUpdate
+                });
+
+                const relevantLog = auditLogs.entries.find(entry =>
+                    entry.target.id === newMember.id &&
+                    entry.changes.some(change => change.key === 'nick') &&
+                    Date.now() - entry.createdTimestamp < 5000
+                );
+
+                const executorMention = relevantLog?.executor
+                    ? `<@${relevantLog.executor.id}>`
+                    : 'Неизвестно';
+
+                const embed = new EmbedBuilder()
+                    .setColor(0x3399ff)
+                    .setTitle('✏️ Смена никнейма')
+                    .addFields(
+                        { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                        { name: 'Изменил', value: executorMention, inline: true },
+                        { name: 'Было', value: oldNick || 'не было', inline: false },
+                        { name: 'Стало', value: newNick || 'удалён', inline: false }
+                        
+                    )
+                    .setTimestamp();
+
+                await logChannel.send({ embeds: [embed] });
+            }
+
+            // 🔹 Смена ролей
             const oldRoles = new Set(oldMember.roles.cache.keys());
             const newRoles = new Set(newMember.roles.cache.keys());
 
             const addedRoles = [...newRoles].filter(roleId => !oldRoles.has(roleId));
             const removedRoles = [...oldRoles].filter(roleId => !newRoles.has(roleId));
 
-            if (addedRoles.length === 0 && removedRoles.length === 0) return;
+            if (addedRoles.length > 0 || removedRoles.length > 0) {
+                const auditLogs = await newMember.guild.fetchAuditLogs({
+                    limit: 10,
+                    type: AuditLogEvent.MemberRoleUpdate
+                });
 
-            const auditLogs = await newMember.guild.fetchAuditLogs({
-                limit: 10,
-                type: AuditLogEvent.MemberRoleUpdate
-            });
+                const relevantLog = auditLogs.entries.find(entry =>
+                    entry.target.id === newMember.id &&
+                    Date.now() - entry.createdTimestamp < 5000
+                );
 
-            const relevantLog = auditLogs.entries.find(entry =>
-                entry.target.id === newMember.id &&
-                Date.now() - entry.createdTimestamp < 5000
-            );
+                const executorMention = relevantLog?.executor
+                    ? `<@${relevantLog.executor.id}>`
+                    : 'Неизвестно';
 
-            const executor = relevantLog?.executor;
-            const executorMention = executor ? `<@${executor.id}>` : 'Неизвестно';
+                for (const roleId of addedRoles) {
+                    const embed = new EmbedBuilder()
+                        .setColor(0x00cc66)
+                        .setTitle('✅ Роль выдана')
+                        .addFields(
+                            { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                            { name: 'Роль', value: `<@&${roleId}>`, inline: true },
+                            { name: 'Выдал', value: executorMention, inline: true }
+                        )
+                        .setTimestamp()
+                        .setFooter({ text: `Role_ID: ${roleId}` });
 
-            for (const roleId of addedRoles) {
-                const role = newMember.guild.roles.cache.get(roleId);
-                const embed = new EmbedBuilder()
-                    .setColor(0x00cc66)
-                    .setTitle('✅ Роль выдана')
-                    .addFields(
-                        { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
-                        { name: 'Роль', value: `<@&${roleId}>`, inline: true },
-                        { name: 'Выдал', value: executorMention, inline: true }
-                    )
-                    .setTimestamp()
-                    .setFooter({ text: `Role_ID: ${roleId}` });
+                    await logChannel.send({ embeds: [embed] });
+                }
 
-                await logChannel.send({ embeds: [embed] });
+                for (const roleId of removedRoles) {
+                    const embed = new EmbedBuilder()
+                        .setColor(0xcc3300)
+                        .setTitle('❌ Роль снята')
+                        .addFields(
+                            { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
+                            { name: 'Роль', value: `<@&${roleId}>`, inline: true },
+                            { name: 'Снял', value: executorMention, inline: true }
+                        )
+                        .setTimestamp()
+                        .setFooter({ text: `Role_ID: ${roleId}` });
+
+                    await logChannel.send({ embeds: [embed] });
+                }
             }
 
-            for (const roleId of removedRoles) {
-                const role = newMember.guild.roles.cache.get(roleId);
-                const embed = new EmbedBuilder()
-                    .setColor(0xcc3300)
-                    .setTitle('❌ Роль снята')
-                    .addFields(
-                        { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
-                        { name: 'Роль', value: `<@&${roleId}>`, inline: true },
-                        { name: 'Снял', value: executorMention, inline: true }
-                    )
-                    .setTimestamp()
-                    .setFooter({ text: `Role_ID: ${roleId}` });
-
-                await logChannel.send({ embeds: [embed] });
-            }
         } catch (err) {
             const control = client.channels.cache.get('878520465856036935');
             const stackLine = err.stack?.split('\n').find(line => line.includes('Nazgul/events.js'));
             const location = stackLine?.trim() || 'место ошибки не определено';
 
-            control?.send(`Мама, хлеп! Ошибка при логировании обновления ролей.\n\`${location}\``);
-            console.error('[Nazgul] Ошибка в обработке guildMemberUpdate:', err);
-        }
-    });
-
-    //смена никнейма
-    client.on('guildMemberUpdate', async (oldMember, newMember) => {
-        if (newMember.guild.id !== '1195522221901369455') return;
-
-        try {
-            const logChannel = newMember.guild.channels.cache.get('1407373230892908586');
-            if (!logChannel || !logChannel.isTextBased()) return;
-
-            const oldRoles = new Set(oldMember.roles.cache.keys());
-            const newRoles = new Set(newMember.roles.cache.keys());
-
-            const addedRoles = [...newRoles].filter(roleId => !oldRoles.has(roleId));
-            const removedRoles = [...oldRoles].filter(roleId => !newRoles.has(roleId));
-
-            if (addedRoles.length === 0 && removedRoles.length === 0) return;
-
-            const auditLogs = await newMember.guild.fetchAuditLogs({
-                limit: 10,
-                type: AuditLogEvent.MemberRoleUpdate
-            });
-
-            const relevantLog = auditLogs.entries.find(entry =>
-                entry.target.id === newMember.id &&
-                Date.now() - entry.createdTimestamp < 5000
-            );
-
-            const executor = relevantLog?.executor;
-            const executorMention = executor ? `<@${executor.id}>` : 'Неизвестно';
-
-            for (const roleId of addedRoles) {
-                const role = newMember.guild.roles.cache.get(roleId);
-                const embed = new EmbedBuilder()
-                    .setColor(0x00cc66)
-                    .setTitle('✅ Роль выдана')
-                    .addFields(
-                        { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
-                        { name: 'Роль', value: `<@&${roleId}>`, inline: true },
-                        { name: 'Выдал', value: executorMention, inline: true }
-                    )
-                    .setTimestamp()
-                    .setFooter({ text: `Role_ID: ${roleId}` });
-
-                await logChannel.send({ embeds: [embed] });
-            }
-
-            for (const roleId of removedRoles) {
-                const role = newMember.guild.roles.cache.get(roleId);
-                const embed = new EmbedBuilder()
-                    .setColor(0xcc3300)
-                    .setTitle('❌ Роль снята')
-                    .addFields(
-                        { name: 'Участник', value: `<@${newMember.id}>`, inline: true },
-                        { name: 'Роль', value: `<@&${roleId}>`, inline: true },
-                        { name: 'Снял', value: executorMention, inline: true }
-                    )
-                    .setTimestamp()
-                    .setFooter({ text: `Role_ID: ${roleId}` });
-
-                await logChannel.send({ embeds: [embed] });
-            }
-        } catch (err) {
-            const control = client.channels.cache.get('878520465856036935');
-            const stackLine = err.stack?.split('\n').find(line => line.includes('Nazgul/events.js'));
-            const location = stackLine?.trim() || 'место ошибки не определено';
-
-            control?.send(`Мама, хлеп! Ошибка при логировании обновления ролей.\n\`${location}\``);
+            control?.send(`Мама, хлеп! Ошибка при логировании обновления участника.\n\`${location}\``);
             console.error('[Nazgul] Ошибка в обработке guildMemberUpdate:', err);
         }
     });
@@ -418,6 +384,75 @@ module.exports = function setupEvents(client) {
             console.error('[Nazgul] Ошибка в обработке guildBanRemove:', err);
         }
     });
+
+    //перемещение по голосовым каналам
+    /*client.on('voiceStateUpdate', async (oldState, newState) => {
+        if (newState.guild.id !== '1195522221901369455') return;
+        console.log(`[DEBUG] voiceStateUpdate: ${oldState.id} → ${newState.id}`);
+
+        try {
+            const logChannel = newState.guild.channels.cache.get('1407373230892908586');
+            if (!logChannel || !logChannel.isTextBased()) return;
+
+            const fromChannel = oldState.channel;
+            const toChannel = newState.channel;
+
+            if (!fromChannel || !toChannel || fromChannel.id === toChannel.id) return;
+
+            // Ждём 1 секунду, чтобы Discord успел записать аудит
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            let executorMention = 'Неизвестно';
+
+            try {
+                const auditLogs = await newState.guild.fetchAuditLogs({
+                    limit: 10,
+                    type: AuditLogEvent.MemberMove
+                });
+
+                const relevantLog = auditLogs.entries.find(entry =>
+                    entry?.target?.id === newState.id ||
+                    entry?.target?.username === newState.member?.user?.username
+                );
+
+                if (relevantLog) {
+                    const executorId = relevantLog.executor?.id;
+                    const targetId = relevantLog.target?.id;
+
+                    console.log(`[DEBUG] Найден лог: executor=${executorId}, target=${targetId}`);
+
+                    if (executorId && executorId !== targetId) {
+                        executorMention = `<@${executorId}>`;
+                    }
+                } else {
+                    console.log('[DEBUG] Не найдено подходящей записи в журнале аудита');
+                }
+            } catch (auditError) {
+                console.warn('[Nazgul] Ошибка при получении журнала аудита:', auditError);
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor(0x9933ff)
+                .setTitle('🔄 Перемещение в голосовом канале')
+                .addFields(
+                    { name: 'Участник', value: `<@${newState.id}>`, inline: true },
+                    { name: 'Переместил', value: executorMention, inline: true },
+                    { name: 'Из канала', value: fromChannel.name, inline: false },
+                    { name: 'В канал', value: toChannel.name, inline: true }
+                )
+                .setTimestamp();
+
+            await logChannel.send({ embeds: [embed] });
+
+        } catch (err) {
+            const control = client.channels.cache.get('878520465856036935');
+            const stackLine = err.stack?.split('\n').find(line => line.includes('Nazgul/events.js'));
+            const location = stackLine?.trim() || 'место ошибки не определено';
+
+            control?.send(`Мама, хлеп! Ошибка при логировании перемещения в голосовом.\n\`${location}\``);
+            console.error('[Nazgul] Ошибка в voiceStateUpdate (перемещение):', err);
+        }
+    });*/
 
 
 };
