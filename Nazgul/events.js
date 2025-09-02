@@ -386,23 +386,22 @@ module.exports = function setupEvents(client) {
     });
 
     //перемещение по голосовым каналам
-    /*client.on('voiceStateUpdate', async (oldState, newState) => {
+    client.on('voiceStateUpdate', async (oldState, newState) => {
         if (newState.guild.id !== '1195522221901369455') return;
-        console.log(`[DEBUG] voiceStateUpdate: ${oldState.id} → ${newState.id}`);
+
+        const fromChannel = oldState.channel;
+        const toChannel = newState.channel;
+
+        if (!fromChannel || !toChannel || fromChannel.id === toChannel.id) return;
 
         try {
             const logChannel = newState.guild.channels.cache.get('1407373230892908586');
             if (!logChannel || !logChannel.isTextBased()) return;
 
-            const fromChannel = oldState.channel;
-            const toChannel = newState.channel;
-
-            if (!fromChannel || !toChannel || fromChannel.id === toChannel.id) return;
-
             // Ждём 1 секунду, чтобы Discord успел записать аудит
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            let executorMention = 'Неизвестно';
+            let executorMention = 'Сам перешёл';
 
             try {
                 const auditLogs = await newState.guild.fetchAuditLogs({
@@ -410,20 +409,10 @@ module.exports = function setupEvents(client) {
                     type: AuditLogEvent.MemberMove
                 });
 
-                const relevantLog = auditLogs.entries.find(entry =>
-                    entry?.target?.id === newState.id ||
-                    entry?.target?.username === newState.member?.user?.username
-                );
+                const firstEntry = auditLogs.entries.first();
 
-                if (relevantLog) {
-                    const executorId = relevantLog.executor?.id;
-                    const targetId = relevantLog.target?.id;
-
-                    console.log(`[DEBUG] Найден лог: executor=${executorId}, target=${targetId}`);
-
-                    if (executorId && executorId !== targetId) {
-                        executorMention = `<@${executorId}>`;
-                    }
+                if (firstEntry?.executor) {
+                    executorMention = `<@${firstEntry.executor.id}>`;
                 } else {
                     console.log('[DEBUG] Не найдено подходящей записи в журнале аудита');
                 }
@@ -437,8 +426,9 @@ module.exports = function setupEvents(client) {
                 .addFields(
                     { name: 'Участник', value: `<@${newState.id}>`, inline: true },
                     { name: 'Переместил', value: executorMention, inline: true },
-                    { name: 'Из канала', value: fromChannel.name, inline: false },
-                    { name: 'В канал', value: toChannel.name, inline: true }
+                    { name: '', value: '', inline: false },
+                    { name: 'Из канала', value: `<#${fromChannel.id}>`, inline: true },
+                    { name: 'В канал', value: `<#${toChannel.id}>`, inline: true }
                 )
                 .setTimestamp();
 
@@ -449,10 +439,11 @@ module.exports = function setupEvents(client) {
             const stackLine = err.stack?.split('\n').find(line => line.includes('Nazgul/events.js'));
             const location = stackLine?.trim() || 'место ошибки не определено';
 
-            control?.send(`Мама, хлеп! Ошибка при логировании перемещения в голосовом.\n\`${location}\``);
-            console.error('[Nazgul] Ошибка в voiceStateUpdate (перемещение):', err);
+            control?.send(`Ошибка при логировании перемещения в голосовом.\n\`${location}\``);
+            console.error('[Nazgul] Ошибка в voiceStateUpdate:', err);
         }
-    });*/
+    });
+
 
 
 };
