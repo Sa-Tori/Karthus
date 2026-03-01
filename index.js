@@ -4,15 +4,15 @@ const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const axios = require('axios');
 
 // ─── Фейковый сервер для Render ──────────────────────────────────────
-require('./server'); // Express
+//require('./server'); // Express
 
-const SELF_URL = 'https://karthus.onrender.com';
+//const SELF_URL = 'https://karthus.onrender.com';
 
-setInterval(() => {
-    axios.get(SELF_URL)
-        .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
-        .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
-}, 14 * 60 * 1000); // каждые 14 минут
+//setInterval(() => {
+//    axios.get(SELF_URL)
+//        .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
+//        .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
+//}, 14 * 60 * 1000); // каждые 14 минут
 
 // ─── Общие функции ───────────────────────────────────────────────────
 async function sendMessageToChannel(client, channelId, messageText) {
@@ -42,12 +42,18 @@ async function reportErrorToDiscord(client, error) {
 }
 
 // ─── Подключение Karthus ─────────────────────────────────────────────
+
+
 const karthus = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+    presence: {
+        status: 'invisible'
+    }
 });
-karthus.setMaxListeners(30); // увеличиваем лимит слушателей
+karthus.setMaxListeners(30);
 
 const karthusHandlers = [
+    //require('./Karthus/spy'),
     require('./Karthus/answer'),
     require('./Karthus/antinitro'),
     require('./Karthus/coffee'),
@@ -154,17 +160,36 @@ const nazgul = new Client({
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMembers 
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User]
+    partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User],
+    presence: {
+        status: 'invisible'
+    }
 });
 
 const nazgulHandlers = [
-    require('./Nazgul/sirus'),
+    require('./Nazgul/spy'),
     //require('./Nazgul/syncRanks'),
     // другие обработчики...
 ];
 
-const setupEvents = require('./Nazgul/events');
-setupEvents(nazgul);
+//const setupEvents = require('./Nazgul/events');
+//setupEvents(nazgul);
+
+
+// В обработчике ready для Nazgul:
+//nazgul.once('ready', async () => {
+//    console.log(`Nazgul logged in as ${nazgul.user.tag}`);
+
+//    // Вызов функции для логирования каналов
+//    try {
+//        const listChannels = require('./Nazgul/spy');
+//        await listChannels(nazgul);
+//    } catch (err) {
+//        console.error('Не удалось выполнить listChannels:', err);
+//    }
+
+//    sendMessageToChannel(nazgul, '522817871370387472', 'Приложение запущено - 4');
+//});
 
 nazgul.once('ready', () => {
     console.log(`Nazgul logged in as ${nazgul.user.tag}`);
