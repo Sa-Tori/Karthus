@@ -6,7 +6,7 @@ const axios = require('axios');
 // ─── Фейковый сервер для Render ──────────────────────────────────────
 require('./server'); // Express
 
-const SELF_URL = 'https://content-tamiko-karthus.koyeb.app';
+const SELF_URL = 'https://content-tamiko-huigames-4d14a792.koyeb.app';
 
 setInterval(() => {
     axios.get(SELF_URL)
