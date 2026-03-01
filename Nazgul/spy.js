@@ -18,8 +18,8 @@ module.exports = async function spy(message, client) {
             '776445694587306028',
             '836240368206872576',
             '898462500293578802',
-            '1273059244563894292',
-            '155149108183695360'
+            '155149108183695360',
+            '1273059244563894292'
         ];
 
         if (ignoredUsers.includes(message.author.id)) return;
