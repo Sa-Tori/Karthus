@@ -6,7 +6,7 @@ const axios = require('axios');
 // ─── Фейковый сервер для Render ──────────────────────────────────────
 require('./server'); // Express
 
-const SELF_URL = 'https://karthus.onrender.com';
+const SELF_URL = 'https://karthus-something.koyeb.app';
 
 setInterval(() => {
     axios.get(SELF_URL)
