@@ -4,15 +4,15 @@ const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const axios = require('axios');
 
 // ─── Фейковый сервер для Render ──────────────────────────────────────
-//require('./server'); // Express
+require('./server'); // Express
 
-//const SELF_URL = 'https://karthus.onrender.com';
+const SELF_URL = 'https://karthus.onrender.com';
 
-//setInterval(() => {
-//    axios.get(SELF_URL)
-//        .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
-//        .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
-//}, 14 * 60 * 1000); // каждые 14 минут
+setInterval(() => {
+    axios.get(SELF_URL)
+        .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
+        .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
+}, 14 * 60 * 1000); // каждые 14 минут
 
 // ─── Общие функции ───────────────────────────────────────────────────
 async function sendMessageToChannel(client, channelId, messageText) {
