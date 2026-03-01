@@ -12,7 +12,7 @@ setInterval(() => {
     axios.get(SELF_URL)
         .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
         .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
-}, 60 * 1000); // каждую 1 минуту
+}, 45 * 1000); // каждую 1 минуту
 
 // ─── Общие функции ───────────────────────────────────────────────────
 async function sendMessageToChannel(client, channelId, messageText) {
