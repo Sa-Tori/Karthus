@@ -23,7 +23,7 @@ module.exports = async function (message, client) {
 
         // 👻 Реакции на "присутствия души"
         if (
-            ['542663623789641729', '478669590365339649'].includes(message.author.id) &&
+            ['542663623789641729', '478669590365339649', '470364536667504651'].includes(message.author.id) &&
             content.includes('присутствия души')
         ) {
             const soulEmojis = [
@@ -85,7 +85,8 @@ module.exports = async function (message, client) {
             '816351964278292541',
             '838111748757127218',
             '838116275896713277',
-            '838111662254456832'
+            '838111662254456832',
+            '1457158519920005241'
         ];
         if (
             getRandom(0, 7) === 4 &&
@@ -101,7 +102,7 @@ module.exports = async function (message, client) {
         // 🧨 Случайная fire реакция
         point = '2';
         if (
-            ['542663623789641729', '478669590365339649'].includes(message.author.id) &&
+            ['542663623789641729', '478669590365339649', '470364536667504651'].includes(message.author.id) &&
             getRandom(0, 13) === 4 &&
             !content.includes('нов') &&
             !content.includes('год')
