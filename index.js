@@ -63,13 +63,14 @@ const karthusHandlers = [
     require('./Karthus/greeting'),
     require('./Karthus/reaction'),
     require('./Karthus/replicas'),
-    require('./Karthus/theult'),
-    require('./Karthus/ai')
+    require('./Karthus/theult')
 ];
 
 karthus.once('ready', () => {
     console.log(`Karthus logged in as ${karthus.user.tag}`);
     sendMessageToChannel(karthus, '522817871370387472', 'Приложение запущено - 1');
+
+    require('./Karthus/dailyLog')(karthus);
 });
 
 karthus.on('messageCreate', async (message) => {
