@@ -168,28 +168,10 @@ const nazgul = new Client({
 
 const nazgulHandlers = [
     require('./Nazgul/spy'),
-    //require('./Nazgul/syncRanks'),
     // другие обработчики...
 ];
 
-//const setupEvents = require('./Nazgul/events');
-//setupEvents(nazgul);
 
-
-// В обработчике ready для Nazgul:
-//nazgul.once('ready', async () => {
-//    console.log(`Nazgul logged in as ${nazgul.user.tag}`);
-
-//    // Вызов функции для логирования каналов
-//    try {
-//        const listChannels = require('./Nazgul/spy');
-//        await listChannels(nazgul);
-//    } catch (err) {
-//        console.error('Не удалось выполнить listChannels:', err);
-//    }
-
-//    sendMessageToChannel(nazgul, '522817871370387472', 'Приложение запущено - 4');
-//});
 
 nazgul.once('ready', () => {
     console.log(`Nazgul logged in as ${nazgul.user.tag}`);
