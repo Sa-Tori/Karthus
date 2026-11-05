@@ -3,6 +3,9 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const axios = require('axios');
 
+// ─── Подключаем наш новый логгер ─────────────────────────────────────
+const { logError } = require('./utils/logger');
+
 // ─── Фейковый сервер для Render ──────────────────────────────────────
 require('./server'); // Express
 
@@ -12,7 +15,7 @@ setInterval(() => {
     axios.get(SELF_URL)
         .then(() => console.log(`[KeepAlive] Pinged ${SELF_URL}`))
         .catch(err => console.error(`[KeepAlive] Error: ${err.message}`));
-}, 45 * 1000); // каждую 1 минуту
+}, 45 * 1000);
 
 // ─── Общие функции ───────────────────────────────────────────────────
 async function sendMessageToChannel(client, channelId, messageText) {
@@ -20,7 +23,6 @@ async function sendMessageToChannel(client, channelId, messageText) {
         const channel = await client.channels.fetch(channelId);
         if (channel && channel.isTextBased()) {
             await channel.send(messageText);
-            //console.log(`[Discord] Сообщение отправлено в канал ${channelId}`);
         } else {
             console.error(`[Discord] Канал ${channelId} не является текстовым`);
         }
@@ -29,26 +31,9 @@ async function sendMessageToChannel(client, channelId, messageText) {
     }
 }
 
-async function reportErrorToDiscord(client, error) {
-    try {
-        const guild = await client.guilds.fetch('466006517288665099');
-        const channel = await guild.channels.fetch('522817871370387472');
-        if (channel && channel.isTextBased()) {
-            await channel.send(`Ошибка от ${client.user?.tag || 'неизвестного'}: \`\`\`${error.message || error}\`\`\``);
-        }
-    } catch (err) {
-        console.error('Не удалось отправить ошибку в Discord:', err);
-    }
-}
-
 // ─── Подключение Karthus ─────────────────────────────────────────────
-
-
 const karthus = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-    presence: {
-        status: 'invisible'
-    }
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildPresences]
 });
 karthus.setMaxListeners(30);
 
@@ -69,7 +54,6 @@ const karthusHandlers = [
 karthus.once('ready', () => {
     console.log(`Karthus logged in as ${karthus.user.tag}`);
     sendMessageToChannel(karthus, '522817871370387472', 'Приложение запущено - 1');
-
     require('./Karthus/dailyLog')(karthus);
 });
 
@@ -78,8 +62,17 @@ karthus.on('messageCreate', async (message) => {
         try {
             await message.reply('Karthus Pong!');
         } catch (error) {
-            console.error('Ошибка в Karthus:', error);
-            reportErrorToDiscord(karthus, error);
+            await logError(karthus, error, message);
+        }
+        return;
+    }
+
+    // ⚠️ БЕЗОПАСНЫЙ ТЕСТОВЫЙ БЛОК (обернут в try/catch)
+    if (message.content === '!testerror') {
+        try {
+            throw new Error('Искусственная ошибка для проверки логгера!');
+        } catch (error) {
+            await logError(karthus, error, message); // Передаем ошибку в логгер
         }
         return;
     }
@@ -88,7 +81,7 @@ karthus.on('messageCreate', async (message) => {
         try {
             await handler(message, karthus);
         } catch (err) {
-            console.error('Ошибка в обработчике Karthus:', err);
+            await logError(karthus, err, message);
         }
     }
 });
@@ -113,8 +106,7 @@ merlai.on('messageCreate', async (message) => {
         try {
             await message.reply('Merlai Pong!');
         } catch (error) {
-            console.error('Ошибка в Merlai:', error);
-            reportErrorToDiscord(merlai, error);
+            await logError(merlai, error, message);
         }
         return;
     }
@@ -122,8 +114,7 @@ merlai.on('messageCreate', async (message) => {
     try {
         await handleMerlaiAnswer(message, merlai);
     } catch (err) {
-        console.error('Ошибка в обработчике Merlai:', err);
-        reportErrorToDiscord(merlai, err);
+        await logError(merlai, err, message);
     }
 });
 
@@ -144,8 +135,7 @@ shadian.on('messageCreate', async (message) => {
         try {
             await message.reply('Shadian Pong!');
         } catch (error) {
-            console.error('Ошибка в Shadian:', error);
-            reportErrorToDiscord(shadian, error);
+            await logError(shadian, error, message);
         }
     }
 });
@@ -159,7 +149,7 @@ const nazgul = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers 
+        GatewayIntentBits.GuildMembers
     ],
     partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User],
     presence: {
@@ -168,11 +158,8 @@ const nazgul = new Client({
 });
 
 const nazgulHandlers = [
-    require('./Nazgul/spy'),
-    // другие обработчики...
+    require('./Nazgul/spy')
 ];
-
-
 
 nazgul.once('ready', () => {
     console.log(`Nazgul logged in as ${nazgul.user.tag}`);
@@ -184,8 +171,7 @@ nazgul.on('messageCreate', async (message) => {
         try {
             await message.reply('Nazgul Pong!');
         } catch (error) {
-            console.error('Ошибка в Nazgul:', error);
-            reportErrorToDiscord(nazgul, error);
+            await logError(nazgul, error, message);
         }
         return;
     }
@@ -194,7 +180,7 @@ nazgul.on('messageCreate', async (message) => {
         try {
             await handler(message, nazgul);
         } catch (err) {
-            console.error('Ошибка в обработчике Nazgul:', err);
+            await logError(nazgul, err, message);
         }
     }
 });

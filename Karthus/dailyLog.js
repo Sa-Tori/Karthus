@@ -9,7 +9,7 @@ module.exports = (client) => {
             const channel = client.channels.cache.get(LOG_CHANNEL_ID);
 
             if (channel) {
-                channel.send('🕒 **3:00 МСК**: Бот Картус успешно пропинговал сам себя и работает в штатном режиме.')
+                channel.send('🕒 **3:00 МСК**: Сервер работает в штатном режиме.')
                     .catch(err => console.error('Ошибка отправки лога:', err));
             }
         }
