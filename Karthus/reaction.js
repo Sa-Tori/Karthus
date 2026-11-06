@@ -39,7 +39,7 @@ module.exports = async function (message, client) {
         const emoji = client.emojis.cache.get(emojiId);
         if (emoji) message.react(emoji);
     }
-    if (poetry.owners.includes(message.author.id) && getRandom(0, 13) === 4 && !content.includes('нов') && !content.includes('год')) {
+    if (poetry.owners.includes(message.author.id) && getRandom(0, 5) === 4 && !content.includes('нов') && !content.includes('год')) {
         const fireList = poetry.fire;
         const emojiId = fireList[getRandom(0, fireList.length - 1)];
         const emoji = client.emojis.cache.get(emojiId);
