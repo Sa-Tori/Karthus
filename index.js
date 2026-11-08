@@ -48,7 +48,8 @@ const karthusHandlers = [
     require('./Karthus/greeting'),
     require('./Karthus/reaction'),
     require('./Karthus/replicas'),
-    require('./Karthus/theult')
+    require('./Karthus/theult'),
+    require('./Karthus/quotes')
 ];
 
 karthus.once('ready', () => {

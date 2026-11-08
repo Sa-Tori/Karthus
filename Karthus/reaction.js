@@ -39,7 +39,7 @@ module.exports = async function (message, client) {
         const emoji = client.emojis.cache.get(emojiId);
         if (emoji) message.react(emoji);
     }
-    if (poetry.owners.includes(message.author.id) && getRandom(0, 5) === 4 && !content.includes('нов') && !content.includes('год')) {
+    if (poetry.owners.includes(message.author.id) && getRandom(0, 13) === 4 && !content.includes('нов') && !content.includes('год')) {
         const fireList = poetry.fire;
         const emojiId = fireList[getRandom(0, fireList.length - 1)];
         const emoji = client.emojis.cache.get(emojiId);
@@ -48,4 +48,34 @@ module.exports = async function (message, client) {
     }
     if (message.content === 'пика') message.channel.send('<a:cda8:526723928815566848>');
     if (content.includes('хлеп')) message.channel.send('<a:g2774:760531480824512512>');
+
+    if (message.content === 'пика') message.channel.send('<a:cda8:526723928815566848>');
+    if (content.includes('хлеп')) message.channel.send('<a:g2774:760531480824512512>');
+
+    const ignoredForRandom = ['155149108183695360', '523116257390886954'];
+    if (message.content === '!ррм' || (getRandom(0, 50) === 3 && !ignoredForRandom.includes(message.author.id))) {
+
+        const customEmojis = Array.from(client.emojis.cache.values())
+            .filter(emoji => emoji.name && emoji.id) 
+            .map(emoji => emoji.toString()); 
+
+        const defaultEmojis = [
+            '😀', '😂', '🤣', '😊', '😎', '😍', '🤔', '😮', '😢', '😭',
+            '🔥', '💩', '💀', '👻', '🤖', '👽', '🎉', '🎃', '❤️', '💔',
+            '👍', '👎', '👏', '🙏', '💪', '👀', '🤡', '🤯', '🥳', '✨'
+        ];
+
+        const allEmojis = [...customEmojis, ...defaultEmojis];
+        const randomEmoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+
+        try {
+            await message.react(randomEmoji);
+        } catch (err) {
+            if (err.code === 10014) {
+                console.log(`[Reaction] Пропущено недоступное эмодзи: ${randomEmoji}`);
+            } else {
+                throw err;
+            }
+        }
+    }
 };

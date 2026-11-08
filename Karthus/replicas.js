@@ -19,7 +19,7 @@ function randWord(s) {
 module.exports = async function (message, client) {
     if (!message.content || message.author.bot) return;
 
-    const allowedGuilds = ['683107614589976657', '532954366571708427', '622954155077533696', '466006517288665099', '611111608219074570'];
+    const allowedGuilds = ['683107614589976657', '532954366571708427', '622954155077533696', '466006517288665099', '611111608219074570', '1431800967111643178'];
     if ((allowedGuilds.includes(message.guild?.id) || message.content.startsWith('ds')) && message.author.id !== '523116257390886954') {
         let content = message.content;
         let force = false;
