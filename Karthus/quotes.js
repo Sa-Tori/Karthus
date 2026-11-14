@@ -14,7 +14,7 @@ module.exports = async function (message, client) {
     if (!message.content || message.author.bot) return;
 
     const isTestCommand = message.content.startsWith('!цитата');
-    if (!isTestCommand && getRandom(1, 51) !== 2) return;
+    if (!isTestCommand && getRandom(1, 71) !== 2) return;
 
     const cleanText = isTestCommand ? message.content.replace('!цитата', '').trim() : message.content;
     const keyword = getRandomWord(cleanText);
