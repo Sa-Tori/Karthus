@@ -27,7 +27,7 @@ module.exports = async function (message, client) {
         const keyword = randWord(content);
         if (!keyword) return;
         const matches = league.voice.filter((line) => lowerCase(line).includes(keyword));
-        if (matches.length > 0 && (getRandom(0, 20) === 7 || force)) {
+        if (matches.length > 0 && (getRandom(0, 70) === 7 || force)) {
             message.channel.send('```' + matches[getRandom(0, matches.length - 1)] + '```');
         } else if (force && matches.length === 0) {
             message.channel.send('Прошу простить, меня ждут крипы.');
